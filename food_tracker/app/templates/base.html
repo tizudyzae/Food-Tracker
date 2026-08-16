@@ -1,0 +1,4 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mounjaro Coach</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head><body>
+<header><a href="{{url_for('dashboard')}}" class="brand"><span>MC</span>Mounjaro Coach</a><nav><a href="{{url_for('meal')}}">Log meal</a><a href="{{url_for('foods')}}">Foods</a><a href="{{url_for('weights')}}">Weight</a><a href="{{url_for('config_page')}}">Settings</a></nav></header>
+<main>{% for kind,msg in get_flashed_messages(with_categories=true) %}<div class="flash {{kind}}">{{msg}}</div>{% endfor %}{% block body %}{% endblock %}</main>
+<footer>Private, local coaching context — warnings are informative, not medical diagnoses.</footer></body></html>
