@@ -1,0 +1,97 @@
+# Mounjaro Food & Weight Logging Rules
+
+Updated 16 August 2026. This replaces the earlier three-rule sheet.
+
+## Purpose and default targets
+
+- Keep one food log per calendar day, recording calories, protein, carbohydrate, fat, fibre and salt whenever the data is available.
+- Default daily calorie range: **2,000 to 2,200 kcal**. Treat 2,200 kcal as the normal ceiling unless Nathan explicitly sets a different plan for that day.
+- Protein is important, but not a target to force: **150 to 170 g/day is already ample**. Prefer vegetables, fibre and food volume rather than extra lean protein once this is covered.
+- Flag unusually high salt, very low fibre, or a high-fat meal where it might affect Mounjaro tolerance. Do not present a normal one-off meal as a failure.
+- Track Mounjaro tolerance only when symptoms are reported. Important symptoms to note: nausea, vomiting, reflux, constipation, diarrhoea, dizziness, weakness and inability to keep fluids down.
+
+## What counts as logged
+
+- Log food only when Nathan clearly says he has eaten/is eating it **and gives a time**.
+- A proposed meal, shopping photo or nutritional discussion is not a log entry. Clearly label it as proposed.
+- Use the actual time supplied, including a backdated time. If no time is supplied, ask for one rather than silently logging it.
+- Food eaten after midnight as part of the late evening routine stays with the day that began before midnight, unless Nathan says it is a new day. State this explicitly in the final daily total.
+- Corrections replace the earlier entry. Do not count the old and new version together.
+- For packaged foods in the reference database below, no new photo is needed unless the pack size, flavour, recipe or label has changed.
+- For foods not in the database, or where the weight/amount differs, ask for a label photo or the exact quantity. Never invent a precise number.
+
+## Usual timing pattern
+
+These are reference windows, not required meal times:
+
+| Typical eating point | Usual time |
+|---|---|
+| First meal | 14:00 to 14:30, average about 14:11 |
+| Work/evening meal or shakes | 19:30 to 20:15 |
+| Main late stir-fry | 23:30 to 00:30, average about 00:24 |
+
+The late meal is often the largest meal, roughly 950 kcal on average. Meal timing is informational only: total intake and Mounjaro tolerance matter more.
+
+## Food database
+
+Values are **per stated pack/portion**, drawn from saved food logs. A dash means that nutrient was not captured reliably enough to treat as a reference value. `~` means an estimate rather than a label value.
+
+| Food and default portion | kcal | Protein (g) | Carbs (g) | Fat (g) | Fibre (g) | Salt (g) | Reference status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Banana, medium | ~105 | ~1.3 | ~27 | ~0.3 | ~3 | ~0 | standard estimate |
+| Co-op Lime & Chilli Chicken Protein Chunks, 60 g | 81 | 16 | 2.4 | 0.9 | - | - | verified |
+| Co-op Tikka Chicken Chunks, 80 g | 103 | 20 | - | - | - | - | verified |
+| Co-op Flame Grilled Chicken Mini Fillets, 130 g pack | 154 | 36 | - | - | - | - | verified |
+| Co-op Sweet Chilli Chicken Protein Bites | 181 | 9.6 | - | - | - | - | verify pack size next time |
+| Co-op Protein Jalapeño BBQ Popped Chips, 25 g | 102 | 6.7 | 13 | 2.6 | 1.0 | 0.26 | verified |
+| Itsu Thai Sweet Chilli Prawn Crackers, 19 g | 97 | <0.5 | 12 | 5.2 | - | - | verified |
+| Huel Black RTD, Strawberry Banana, 500 ml | 400 | 35 | - | - | ~7 | - | verify flavour label if changed |
+| Huel Banana RTD, 500 ml | 400 | 20 | - | - | - | - | verified |
+| UFIT Strawberry Protein Shake, 330 ml | 149 | 25 | - | - | - | - | verified |
+| UFIT White Chocolate Protein Shake | ~154 | 30 | - | - | - | - | verify size/label next time |
+| Optimum Nutrition High Protein Shake, 330 ml | 185 | 25 | - | - | - | - | verified |
+| YFood Complete Drink, 500 ml | 400 | 35 | - | - | - | - | verify flavour label if changed |
+| Chicken breast, raw, weighed | ~110 per 100 g | ~23 per 100 g | 0 | ~1 to 2 | 0 | 0 | use pack label where available |
+| Co-op stir-fry vegetables, 320 g | 86 | ~4 | - | <1 | ~10 | - | verified |
+| Co-op stir-fry vegetables, 160 g | 43 | ~2 | - | <0.5 | ~5 | - | derived from 320 g pack |
+| Beansprouts | ~47 per 100 g | - | - | - | - | - | estimate, weigh portion |
+| Sugar-snap peas | ~40 per 100 g | - | - | - | - | - | estimate, weigh portion |
+| Ben's Egg Fried Rice, 220 g pouch | ~344 to 345 | ~9 | - | - | - | - | checked in two logs |
+| Ben's Egg Fried Rice, 120 g | ~190 | - | - | - | - | - | derived portion |
+| Mexican-style rice, 250 g | 378 | ~7 to 8 | 76 to 78 | 4.6 | - | - | verify brand if changed |
+| Singapore noodles, 300 g | 411 | - | - | - | - | - | verified |
+| Tesco rice noodles, 300 g | 384 | 7.6 | - | - | - | - | verified |
+| Tesco pepper stir-fry vegetables, whole pack | 136 | 5.2 | - | - | - | - | verified |
+| Tesco sweet chilli stir-fry sauce, 165 g | 136 | - | - | - | - | - | verified |
+| Generic sweet chilli stir-fry sauce, 150 g | ~120 to 164 | ~0 | ~28 to 40 | <1 | - | - | photo needed when brand differs |
+| Blue Dragon Sweet Chilli Sauce, 120 g pouch | ~191 | - | - | - | - | - | verified |
+| Wagamama Firecracker Sauce, 120 g pouch | 106 | 2.4 | - | - | - | 4.28 | verified, high salt |
+| Tesco pork stir-fry strips, 250 g | 314 | 56.8 | - | - | - | - | verified |
+| Salt & Pepper Chicken Spring Rolls, 100 g pack (2 rolls) | 307 | 8.2 | 27 | 18 | 3.6 | 0.49 | verified |
+
+### Common meal templates
+
+- **Standard chicken stir-fry:** weighed chicken breast, one whole rice/noodle pack, vegetables and one sauce pouch. Always confirm the chicken weight and exact rice/noodle/sauce variant.
+- **Quick work meal:** a Huel/UFIT/other protein drink plus chicken chunks, chips or prawn crackers and sometimes a banana. Use the database portions above.
+- When a whole pack is used, log it as the listed pack. When a partial pack is used, calculate proportionally only where the matching pack data is known.
+
+## Daily reporting standard
+
+After each confirmed entry, provide the itemised meal and updated running total. At day end provide:
+
+1. calories, protein, carbs, fat, fibre and salt, marked estimated where appropriate;
+2. remaining calories against 2,000 and 2,200 kcal, or confirmation that the day is complete;
+3. a short, level-headed note on protein, fibre, salt and Mounjaro tolerance only where relevant;
+4. any missing label/portion details that prevent a reliable total.
+
+## Weight tracking
+
+- Add a weigh-in at least weekly, ideally under comparable conditions: morning, after the toilet, before food/drink, similar clothing.
+- Focus on the rolling trend, not isolated changes. Food salt, late meals and hydration can move scale weight sharply for a few days.
+- Current supplied reference: **126.4 kg on 29 July 2026**.
+
+## Maintenance rules
+
+- When a new packaged food is confirmed from a clear label, add the product, exact portion and full available label nutrition to this sheet.
+- If a manufacturer changes a recipe or a pack size, replace the prior entry rather than averaging the two.
+- Keep unknown values blank. Better a clear gap than pretend precision.
