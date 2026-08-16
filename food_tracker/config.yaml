@@ -1,7 +1,7 @@
-name: "Money Manager"
-description: "Personal budgeting, spending, and wage tracker for Home Assistant."
+name: "Food Tracker"
+description: "Personal calorie budgeting, for Home Assistant."
 version: "0.2.1"
-slug: "money_manager"
+slug: "food_tracker"
 init: false
 arch:
   - aarch64
