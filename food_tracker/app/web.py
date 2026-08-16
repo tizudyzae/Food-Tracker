@@ -1,7 +1,7 @@
 import io, json, os, sqlite3, threading, time
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
-from .core import NUTRIENTS, connect, migrate, save_meal, settings, totals
+from .core import NUTRIENTS, connect, food_day, migrate, save_meal, settings, totals
 from .importer import run_import
 
 def create_app(test_config=None):
@@ -24,9 +24,12 @@ def create_app(test_config=None):
     @app.get("/")
     def dashboard():
         with db() as d:
-            cfg=settings(d); day=request.args.get("day") or __import__('app.core',fromlist=['food_day']).food_day(datetime.now().isoformat(timespec="minutes"),cfg)
+            cfg=settings(d); today=food_day(datetime.now().isoformat(timespec="minutes"),cfg); day=request.args.get("day") or today
+            try: selected=datetime.strptime(day,"%Y-%m-%d").date()
+            except ValueError: return redirect(url_for("dashboard"))
             meals=d.execute("SELECT * FROM meals WHERE food_day=? AND status='confirmed' ORDER BY eaten_at",(day,)).fetchall(); review=d.execute("SELECT count(*) FROM meals WHERE status='review'").fetchone()[0]
-            return render_template("dashboard.html",day=day,meals=meals,total=totals(d,day),review=review)
+            meal_totals={m["id"]:d.execute("SELECT COALESCE(SUM(calories),0) calories, COUNT(*) items FROM meal_items WHERE meal_id=?",(m["id"],)).fetchone() for m in meals}
+            return render_template("dashboard.html",day=day,day_label=selected.strftime("%A, %d %B"),today=today,previous=(selected-timedelta(days=1)).isoformat(),next_day=(selected+timedelta(days=1)).isoformat(),meals=meals,meal_totals=meal_totals,total=totals(d,day),review=review)
     @app.route("/meal",methods=["GET","POST"])
     @app.route("/meal/<int:mid>",methods=["GET","POST"])
     def meal(mid=None):
@@ -40,7 +43,7 @@ def create_app(test_config=None):
                 except (ValueError,sqlite3.Error) as e: flash(str(e),"error")
             foods=d.execute("SELECT * FROM foods WHERE archived=0 ORDER BY name").fetchall(); existing=None; items=[]
             if mid: existing=d.execute("SELECT * FROM meals WHERE id=?",(mid,)).fetchone(); items=d.execute("SELECT * FROM meal_items WHERE meal_id=?",(mid,)).fetchall()
-            return render_template("meal.html",foods=foods,meal=existing,items=items)
+            return render_template("meal.html",foods=foods,meal=existing,items=items,now=datetime.now().strftime("%Y-%m-%dT%H:%M"))
     @app.post("/meal/<int:mid>/delete")
     def delete_meal(mid):
         with db() as d: d.execute("DELETE FROM meals WHERE id=?",(mid,)); d.commit()

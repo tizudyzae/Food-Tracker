@@ -1,6 +1,6 @@
 name: "Mounjaro Coach"
 description: "Private food, nutrition, weight and meal-timing coach."
-version: "0.2.2"
+version: "0.2.3"
 slug: "mounjaro_coach"
 init: false
 arch: [aarch64, amd64]

@@ -41,3 +41,16 @@ def test_london_dst_food_dates(db):
     c=settings(db)
     for stamp in ("2026-03-29T00:30","2026-10-25T00:30"):
         local=datetime.fromisoformat(stamp).replace(tzinfo=ZoneInfo("Europe/London")); assert food_day(local.isoformat(),c)==(local.date()-__import__('datetime').timedelta(days=1)).isoformat()
+
+def test_dashboard_and_meal_form_render(app):
+    client=app.test_client()
+    dashboard=client.get("/?day=2026-08-11")
+    assert dashboard.status_code==200
+    assert b"Tuesday, 11 August" in dashboard.data
+    assert b"Log your first meal" in dashboard.data
+    meal=client.get("/meal")
+    assert meal.status_code==200 and b"Save as eaten" in meal.data
+
+def test_invalid_dashboard_date_redirects(app):
+    response=app.test_client().get("/?day=not-a-date")
+    assert response.status_code==302 and response.headers["Location"].endswith("/")

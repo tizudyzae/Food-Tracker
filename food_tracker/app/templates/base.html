@@ -1,4 +1,32 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mounjaro Coach</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head><body>
-<header><a href="{{url_for('dashboard')}}" class="brand"><span>MC</span>Mounjaro Coach</a><nav><a href="{{url_for('meal')}}">Log meal</a><a href="{{url_for('foods')}}">Foods</a><a href="{{url_for('weights')}}">Weight</a><a href="{{url_for('config_page')}}">Settings</a></nav></header>
-<main>{% for kind,msg in get_flashed_messages(with_categories=true) %}<div class="flash {{kind}}">{{msg}}</div>{% endfor %}{% block body %}{% endblock %}</main>
-<footer>Private, local coaching context — warnings are informative, not medical diagnoses.</footer></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f7f5">
+  <title>{% block title %}Mounjaro Coach{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a href="{{url_for('dashboard')}}" class="brand" aria-label="Mounjaro Coach home"><span class="brand-mark">M</span><span>Mounjaro <b>Coach</b></span></a>
+    <nav aria-label="Main navigation">
+      <a href="{{url_for('dashboard')}}" class="{{'active' if request.endpoint=='dashboard'}}"><span>⌂</span>Overview</a>
+      <a href="{{url_for('meal')}}" class="{{'active' if request.endpoint=='meal'}}"><span>＋</span>Log a meal</a>
+      <a href="{{url_for('foods')}}" class="{{'active' if request.endpoint in ['foods','edit_food']}}"><span>◇</span>Food library</a>
+      <a href="{{url_for('weights')}}" class="{{'active' if request.endpoint=='weights'}}"><span>↗</span>Weight</a>
+    </nav>
+    <div class="sidebar-foot"><a href="{{url_for('config_page')}}" class="{{'active' if request.endpoint=='config_page'}}"><span>⚙</span>Settings</a><small>Private &amp; local</small></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><a href="{{url_for('dashboard')}}" class="mobile-brand"><span class="brand-mark">M</span><b>Mounjaro Coach</b></a><span class="privacy"><i></i> Data stays on this device</span><a class="avatar" href="{{url_for('config_page')}}" aria-label="Open settings">MC</a></header>
+    <main>
+      {% for kind,msg in get_flashed_messages(with_categories=true) %}<div class="flash {{kind}}" role="status"><span>{{'✓' if kind=='ok' else '!'}}</span>{{msg}}</div>{% endfor %}
+      {% block body %}{% endblock %}
+    </main>
+    <footer>Coaching guidance is informative and is not a medical diagnosis.</footer>
+  </div>
+</div>
+<nav class="mobile-nav" aria-label="Mobile navigation"><a href="{{url_for('dashboard')}}" class="{{'active' if request.endpoint=='dashboard'}}"><span>⌂</span>Today</a><a href="{{url_for('foods')}}" class="{{'active' if request.endpoint=='foods'}}"><span>◇</span>Foods</a><a href="{{url_for('meal')}}" class="log"><span>＋</span>Log</a><a href="{{url_for('weights')}}" class="{{'active' if request.endpoint=='weights'}}"><span>↗</span>Weight</a><a href="{{url_for('config_page')}}" class="{{'active' if request.endpoint=='config_page'}}"><span>⚙</span>Settings</a></nav>
+</body></html>
