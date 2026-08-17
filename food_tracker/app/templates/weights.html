@@ -1,1 +1,40 @@
-{% extends 'base.html' %}{% block body %}<h1>Weight trend</h1><form method="post" class="inline"><label>Date and time<input required type="datetime-local" name="measured_at"></label><label>Weight (kg)<input required type="number" step=".1" min="1" name="kg"></label><button>Add reading</button></form><div class="chart">{% set lo=(weights|map(attribute='kg')|min) %}{% set hi=(weights|map(attribute='kg')|max) %}{% for w in weights %}<i style="height:{{20+(w.kg-lo)/(hi-lo or 1)*120}}px" title="{{w.measured_at}}: {{w.kg}} kg"></i>{% endfor %}</div>{% for w in weights|reverse %}<article class="meal"><time>{{w.measured_at[:10]}}</time><b>{{w.kg}} kg {% if w.duplicate %}<em>possible duplicate</em>{% endif %}</b><form method="post" action="{{url_for('delete_weight',wid=w.id)}}"><button class="link">Delete</button></form></article>{% endfor %}{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Weight trend · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head">
+  <div><p class="eyebrow">Progress</p><h1>Weight trend</h1><p class="lede">Use comparable morning readings to see the direction, not daily noise.</p></div>
+</section>
+<section class="weight-layout">
+  <div class="weight-main">
+    <div class="summary-grid">
+      <article><span class="summary-icon"><svg><use href="#i-scale"/></svg></span><div><small>Latest reading</small><b>{{'%.1f kg'|format(summary.latest) if summary.latest is not none else 'No reading'}}</b></div></article>
+      <article><span class="summary-icon change"><svg><use href="#i-trend"/></svg></span><div><small>Overall change</small><b class="{{'positive-change' if summary.change is not none and summary.change < 0 else ''}}">{{'%+.1f kg'|format(summary.change) if summary.change is not none else 'Need 2 readings'}}</b></div></article>
+      <article><span class="summary-icon readings"><svg><use href="#i-calendar"/></svg></span><div><small>Readings</small><b>{{summary.readings}}</b></div></article>
+    </div>
+    <section class="chart-card">
+      <div class="section-head compact"><div><p class="eyebrow">All time</p><h2>Your recorded trend</h2></div>{% if chart.low is not none %}<span>{{'%.1f'|format(chart.low)}} to {{'%.1f'|format(chart.high)}} kg</span>{% endif %}</div>
+      {% if chart.points %}
+      <div class="line-chart">
+        <svg viewBox="0 0 760 230" role="img" aria-label="Weight readings line chart">
+          <defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#54c792" stop-opacity=".28"/><stop offset="1" stop-color="#54c792" stop-opacity="0"/></linearGradient></defs>
+          <path class="grid-line" d="M24 24H736M24 115H736M24 206H736"/>
+          {% if chart.dots|length > 1 %}<polygon points="{{chart.points}} 736,206 24,206" fill="url(#chart-fill)"/><polyline points="{{chart.points}}" class="trend-line"/>{% endif %}
+          {% for dot in chart.dots %}<circle cx="{{dot.x}}" cy="{{dot.y}}" r="5" class="chart-dot"><title>{{dot.date}}: {{dot.kg}} kg</title></circle>{% endfor %}
+        </svg>
+        <div class="chart-dates"><span>{{chart.dots[0].date}}</span><span>{{chart.dots[-1].date}}</span></div>
+      </div>
+      {% else %}<div class="empty compact-empty"><span><svg><use href="#i-scale"/></svg></span><h3>No weight readings yet</h3><p>Add your first reading using the form.</p></div>{% endif %}
+    </section>
+  </div>
+  <aside class="weight-entry panel-form">
+    <div class="panel-title"><div class="title-icon"><svg><use href="#i-plus"/></svg></div><div><h2>Add a reading</h2><p>Morning, after the toilet and before food or drink is best.</p></div></div>
+    <form method="post"><label>Date and time<input required type="datetime-local" name="measured_at"></label><label>Weight in kg<input required type="number" step=".1" min="1" name="kg" placeholder="0.0"></label><button class="button"><svg><use href="#i-check"/></svg>Save reading</button></form>
+  </aside>
+</section>
+<section class="section-head"><div><p class="eyebrow">History</p><h2>Past readings</h2></div></section>
+<div class="reading-list">
+  {% for w in weights|reverse %}
+  <article class="reading"><span class="reading-date">{{w.measured_at[:10]}}<small>{{w.measured_at[11:16]}}</small></span><b>{{'%.1f'|format(w.kg)}} kg</b>{% if w.duplicate %}<span class="badge warning-badge">Possible duplicate</span>{% endif %}<form method="post" action="{{url_for('delete_weight',wid=w.id)}}" onsubmit="return confirm('Delete this reading?')"><button class="icon-button danger-ghost" aria-label="Delete reading"><svg><use href="#i-trash"/></svg></button></form></article>
+  {% else %}<div class="empty compact-empty">No readings saved.</div>{% endfor %}
+</div>
+{% endblock %}

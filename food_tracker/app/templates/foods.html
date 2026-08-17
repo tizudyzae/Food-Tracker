@@ -1,1 +1,45 @@
-{% extends 'base.html' %}{% block body %}<h1>Common foods</h1><p class="lede">Blank means unknown — the coach never manufactures nutrition.</p><details><summary class="button">＋ Add food</summary><form method="post" class="grid"><label>Name<input required name="name"></label><label>Basis<select name="basis"><option>serving</option><option value="100g">per 100 g</option></select></label><label>Amount<input required type="number" step=".01" name="amount"></label><label>Unit<input required name="unit"></label>{% for n in nutrients %}<label>{{n}}<input type="number" step=".001" name="{{n}}"></label>{% endfor %}<label class="wide">Source<input required name="source"></label><button>Save food</button></form></details><div class="cards">{% for f in foods %}<article class="food {{'archived' if f.archived}}"><div><b>{{f.name}}</b><small>{{f.amount|round(1)}} {{f.unit}} · {{f.source}}</small></div><strong>{{f.calories|round|int if f.calories is not none else '—'}} kcal</strong><details><summary>Edit</summary><form method="post" action="{{url_for('edit_food',fid=f.id)}}"><input name="name" value="{{f.name}}" required><input name="amount" type="number" step=".01" value="{{f.amount}}" required><input name="unit" value="{{f.unit}}" required>{% for n in nutrients %}<input name="{{n}}" type="number" step=".001" value="{{f[n] if f[n] is not none else ''}}" placeholder="{{n}} (unknown if blank)">{% endfor %}<input name="source" value="{{f.source}}" required><button>Update</button></form></details><form method="post" action="{{url_for('toggle_food',fid=f.id)}}"><button class="link">{{'Restore' if f.archived else 'Archive'}}</button></form></article>{% endfor %}</div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Food library · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head">
+  <div><p class="eyebrow">Food library</p><h1>Your regular foods</h1><p class="lede">Save a label once, then reuse it whenever you log a meal.</p></div>
+  <details class="add-food"><summary class="button"><svg><use href="#i-plus"/></svg>Add food</summary>
+    <form method="post" class="panel-form">
+      <div class="panel-title"><div class="title-icon"><svg><use href="#i-food"/></svg></div><div><h2>Add a food</h2><p>Use the packet values. Leave nutrients blank when the label does not show them.</p></div></div>
+      <div class="form-grid">
+        <label class="wide">Food name<input required name="name" placeholder="For example, Co-op chilli chicken chunks"></label>
+        <label>Nutrition basis<select name="basis"><option value="serving">Per serving</option><option value="100g">Per 100 g</option></select></label>
+        <label>Portion amount<input required type="number" step=".01" min=".01" name="amount"></label>
+        <label>Portion unit<input required name="unit" placeholder="g, ml, pack or serving"></label>
+        {% for n in nutrients %}<label>{{n|title}}{% if n!='calories' %} (g){% endif %}<input type="number" step=".001" min="0" name="{{n}}" placeholder="Unknown"></label>{% endfor %}
+        <label class="wide">Source<input required name="source" placeholder="Product label, date checked"></label>
+      </div>
+      <div class="panel-actions"><button class="button"><svg><use href="#i-check"/></svg>Save food</button></div>
+    </form>
+  </details>
+</section>
+<div class="toolbar"><label class="search-box"><svg><use href="#i-search"/></svg><input id="food-search" type="search" placeholder="Search saved foods" aria-label="Search saved foods"></label><span>{{foods|length}} saved food{{'' if foods|length==1 else 's'}}</span></div>
+<div class="food-grid" id="food-grid">
+  {% for f in foods %}
+  <article class="food-card {{'archived' if f.archived}}" data-name="{{f.name|lower}}">
+    <div class="food-card-top"><div class="food-symbol"><svg><use href="#i-food"/></svg></div><div class="food-heading"><b>{{f.name}}</b><small>{{f.amount|round(1)}} {{f.unit}}</small></div>{% if f.archived %}<span class="badge">Archived</span>{% endif %}</div>
+    <div class="food-stats"><span><b>{{f.calories|round|int if f.calories is not none else '—'}}</b><small>kcal</small></span><span><b>{{'%.1f'|format(f.protein) if f.protein is not none else '—'}}</b><small>protein</small></span><span><b>{{'%.1f'|format(f.fibre) if f.fibre is not none else '—'}}</b><small>fibre</small></span><span><b>{{'%.2f'|format(f.salt) if f.salt is not none else '—'}}</b><small>salt</small></span></div>
+    <p class="food-source">{{f.source}}</p>
+    <div class="food-card-actions">
+      <details><summary><svg><use href="#i-edit"/></svg>Edit</summary>
+        <form method="post" action="{{url_for('edit_food',fid=f.id)}}" class="edit-food">
+          <div class="form-grid"><label class="wide">Name<input name="name" value="{{f.name}}" required></label><label>Amount<input name="amount" type="number" min=".01" step=".01" value="{{f.amount}}" required></label><label>Unit<input name="unit" value="{{f.unit}}" required></label>{% for n in nutrients %}<label>{{n|title}}<input name="{{n}}" type="number" min="0" step=".001" value="{{f[n] if f[n] is not none else ''}}" placeholder="Unknown"></label>{% endfor %}<label class="wide">Source<input name="source" value="{{f.source}}" required></label></div>
+          <button class="button">Update food</button>
+        </form>
+      </details>
+      <form method="post" action="{{url_for('toggle_food',fid=f.id)}}"><button class="text-button">{{'Restore' if f.archived else 'Archive'}}</button></form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+<div class="empty search-empty" hidden><span><svg><use href="#i-search"/></svg></span><h3>No matching food</h3><p>Try a shorter search.</p></div>
+<script>
+const search=document.querySelector('#food-search'),cards=[...document.querySelectorAll('.food-card')],empty=document.querySelector('.search-empty');
+search.addEventListener('input',()=>{const term=search.value.trim().toLowerCase();let shown=0;cards.forEach(card=>{const match=card.dataset.name.includes(term);card.hidden=!match;if(match)shown++});empty.hidden=shown!==0})
+</script>
+{% endblock %}

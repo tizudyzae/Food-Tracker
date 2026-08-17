@@ -1,13 +1,50 @@
-{% extends 'base.html' %}{% block title %}Daily overview · Mounjaro Coach{% endblock %}{% block body %}
-<section class="page-head"><div><p class="eyebrow">Daily overview</p><h1>{{day_label}}</h1><p class="lede">A clear view of your nutrition and progress.</p></div><a class="button add-meal" href="{{url_for('meal')}}">＋ <span>Log a meal</span></a></section>
-<div class="date-switcher"><a href="?day={{previous}}" aria-label="Previous day">←</a><a href="{{url_for('dashboard')}}" class="date-current">{{'Today' if day==today else day}}</a><a href="?day={{next_day}}" aria-label="Next day">→</a></div>
-<section class="calorie-card">
-  <div><p class="eyebrow light">Daily energy</p><div class="calorie-value">{{'%.0f'|format(total.calories)}} <span>kcal</span></div><p class="target">of {{cfg.calorie_min|int}}–{{cfg.calorie_max|int}} kcal target</p><div class="progress"><i style="width:{{[total.calories/cfg.calorie_max*100,100]|min}}%"></i></div><p class="remaining"><b>{{'%.0f'|format([cfg.calorie_min-total.calories,0]|max)}} kcal</b> until your minimum target</p></div>
-  <div class="energy-ring" style="--p:{{[total.calories/cfg.calorie_max*100,100]|min}}"><div><b>{{(total.calories/cfg.calorie_max*100)|int}}%</b><small>of target</small></div></div>
+{% extends 'base.html' %}
+{% block title %}Daily overview · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head">
+  <div><p class="eyebrow">Daily overview</p><h1>{{day_label}}</h1><p class="lede">Your calories, nutrition and meals in one place.</p></div>
+  <a class="button add-meal" href="{{url_for('meal')}}"><svg><use href="#i-plus"/></svg><span>Log a meal</span></a>
 </section>
-<section class="metric-grid">{% for n,icon,target in [('protein','P',cfg.protein_min),('carbs','C',none),('fat','F',none),('fibre','Fi',cfg.fibre_low),('salt','S',cfg.salt_warn)] %}<article><div class="metric-icon {{n}}">{{icon}}</div><div><small>{{n|title}}</small><b>{{'%.1f'|format(total[n])}} <i>g</i></b>{% if target %}<span>{{'Target' if n!='salt' else 'Guide'}} {{target|int}} g</span>{% else %}<span>Logged today</span>{% endif %}</div>{% if total.incomplete[n] %}<em title="Some values are unknown">!</em>{% endif %}</article>{% endfor %}</section>
-{% if total.incomplete.values()|select|list %}<div class="alert warning"><span>i</span><div><b>Some totals are incomplete</b><p>A confirmed food has unknown label values. We never guess nutrition data.</p></div></div>{% endif %}
-{% if total.salt>cfg.salt_warn %}<div class="alert warning"><span>!</span><div><b>Salt guide exceeded</b><p>Above your configured {{cfg.salt_warn}} g guide. This is context, not a diagnosis.</p></div></div>{% endif %}
-<section class="section-head"><div><p class="eyebrow">Food log</p><h2>Today's meals</h2></div><a href="{{url_for('meal')}}">＋ Add meal</a></section>
-<div class="meal-list">{% for m in meals %}<article class="meal"><div class="meal-time"><b>{{m.eaten_at[11:16]}}</b><span></span></div><div class="meal-main"><b>{{m.note or 'Meal'}}</b><small>{{meal_totals[m.id].items}} food item{{'' if meal_totals[m.id].items==1 else 's'}} · {{meal_totals[m.id].calories|round|int}} kcal</small></div><div class="meal-actions"><a href="{{url_for('meal',mid=m.id)}}">Edit</a><form action="{{url_for('duplicate',mid=m.id)}}" method="post"><button class="link" title="Duplicate meal">⧉</button></form></div></article>{% else %}<div class="empty"><span>⌁</span><h3>Your day is ready</h3><p>Log your first meal to see nutrition totals and insights here.</p><a class="button" href="{{url_for('meal')}}">＋ Log your first meal</a></div>{% endfor %}</div>
-{% if review %}<a class="review-link" href="{{url_for('review')}}"><b>{{review}} historical record{{'' if review==1 else 's'}} need review</b><span>Review now →</span></a>{% endif %}{% endblock %}
+<div class="date-switcher">
+  <a href="?day={{previous}}" aria-label="Previous day"><svg><use href="#i-chevron-left"/></svg></a>
+  <a href="{{url_for('dashboard')}}" class="date-current"><svg><use href="#i-calendar"/></svg>{{'Today' if day==today else day}}</a>
+  <a href="?day={{next_day}}" aria-label="Next day"><svg><use href="#i-chevron-right"/></svg></a>
+</div>
+<section class="calorie-card">
+  <div class="calorie-copy">
+    <p class="eyebrow light">Daily energy</p>
+    <div class="calorie-value">{{'%.0f'|format(total.calories)}} <span>kcal</span></div>
+    <p class="target">Target {{cfg.calorie_min|int}} to {{cfg.calorie_max|int}} kcal</p>
+    <div class="progress" aria-label="{{(total.calories/cfg.calorie_max*100)|int}} percent of calorie target"><i style="width:{{[total.calories/cfg.calorie_max*100,100]|min}}%"></i></div>
+    <p class="remaining">{% if total.calories < cfg.calorie_min %}<b>{{'%.0f'|format(cfg.calorie_min-total.calories)}} kcal</b> until your minimum{% elif total.calories <= cfg.calorie_max %}<b>Inside your target range</b>{% else %}<b>{{'%.0f'|format(total.calories-cfg.calorie_max)}} kcal</b> above your range{% endif %}</p>
+  </div>
+  <div class="energy-ring" style="--p:{{[total.calories/cfg.calorie_max*100,100]|min}}"><div><b>{{(total.calories/cfg.calorie_max*100)|int}}%</b><small>of upper target</small></div></div>
+</section>
+<section class="metric-grid">
+  {% for n,icon,target in [('protein','P',cfg.protein_min),('carbs','C',none),('fat','F',none),('fibre','Fi',cfg.fibre_low),('salt','S',cfg.salt_warn)] %}
+  <article class="metric {{n}}">
+    <div class="metric-icon">{{icon}}</div>
+    <div><small>{{n|title}}</small><b>{{'%.1f'|format(total[n])}} <i>g</i></b>{% if target %}<span>{{'Target' if n!='salt' else 'Guide'}} {{target|int}} g</span>{% else %}<span>Logged today</span>{% endif %}</div>
+    {% if total.incomplete[n] %}<em title="Some values are unknown">!</em>{% endif %}
+  </article>
+  {% endfor %}
+</section>
+{% if total.incomplete.values()|select|list %}<div class="alert warning"><svg><use href="#i-info"/></svg><div><b>Some totals are incomplete</b><p>A food has missing label values, so the app has left them blank instead of guessing.</p></div></div>{% endif %}
+{% if total.salt>cfg.salt_warn %}<div class="alert warning"><svg><use href="#i-info"/></svg><div><b>Salt guide exceeded</b><p>Today is above your configured {{cfg.salt_warn}} g guide.</p></div></div>{% endif %}
+<section class="section-head"><div><p class="eyebrow">Food log</p><h2>Today's meals</h2></div><a href="{{url_for('meal')}}"><svg><use href="#i-plus"/></svg>Add meal</a></section>
+<div class="meal-list">
+  {% for m in meals %}
+  <article class="meal">
+    <div class="meal-time"><b>{{m.eaten_at[11:16]}}</b><span></span></div>
+    <div class="meal-main"><b>{{m.note or 'Meal'}}</b><small>{{meal_totals[m.id].items}} food item{{'' if meal_totals[m.id].items==1 else 's'}} · {{meal_totals[m.id].calories|round|int}} kcal</small></div>
+    <div class="meal-actions">
+      <a class="icon-button" href="{{url_for('meal',mid=m.id)}}" aria-label="Edit meal"><svg><use href="#i-edit"/></svg></a>
+      <form action="{{url_for('duplicate',mid=m.id)}}" method="post"><button class="icon-button" title="Duplicate meal" aria-label="Duplicate meal"><svg><use href="#i-copy"/></svg></button></form>
+    </div>
+  </article>
+  {% else %}
+  <div class="empty"><span><svg><use href="#i-food"/></svg></span><h3>Your day is ready</h3><p>Log your first meal to see nutrition totals and insights here.</p><a class="button" href="{{url_for('meal')}}"><svg><use href="#i-plus"/></svg>Log your first meal</a></div>
+  {% endfor %}
+</div>
+{% if review %}<a class="review-link" href="{{url_for('review')}}"><span><svg><use href="#i-info"/></svg><b>{{review}} historical record{{'' if review==1 else 's'}} need review</b></span><strong>Review now <svg><use href="#i-chevron-right"/></svg></strong></a>{% endif %}
+{% endblock %}

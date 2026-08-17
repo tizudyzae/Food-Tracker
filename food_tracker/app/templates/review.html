@@ -1,1 +1,10 @@
-{% extends 'base.html' %}{% block body %}<h1>Historical import review</h1><p>Ambiguous items are deliberately not part of any total.</p>{% for r in rows %}<article class="warning"><b>Uncertain</b><p>{{r.note}}</p></article>{% else %}<div class="empty">No uncertain records.</div>{% endfor %}<h2>Import reports</h2>{% for r in runs %}<pre>{{r.run_at}} {{r.report}}</pre>{% endfor %}{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Import review · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head"><div><p class="eyebrow">Source logs</p><h1>Historical import review</h1><p class="lede">Uncertain records stay out of your totals until the evidence is clear.</p></div><a class="button secondary" href="{{url_for('config_page')}}">Back to settings</a></section>
+<div class="review-grid">
+  {% for r in rows %}<article class="review-card"><span><svg><use href="#i-info"/></svg></span><div><b>Needs review</b><p>{{r.note}}</p></div></article>{% else %}<div class="empty"><span><svg><use href="#i-check"/></svg></span><h3>Nothing waiting for review</h3><p>All importable records are dealt with.</p></div>{% endfor %}
+</div>
+<section class="section-head"><div><p class="eyebrow">Audit trail</p><h2>Import reports</h2></div></section>
+<div class="report-list">{% for r in runs %}<article><time>{{r.run_at}}</time><pre>{{r.report}}</pre></article>{% else %}<div class="empty compact-empty">No import has been run yet.</div>{% endfor %}</div>
+{% endblock %}

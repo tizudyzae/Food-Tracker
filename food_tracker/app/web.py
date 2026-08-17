@@ -1,11 +1,28 @@
-import io, json, os, sqlite3, threading, time
+import io, json, os, re, sqlite3, threading, time
 from datetime import datetime, timedelta
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
 from .core import NUTRIENTS, connect, food_day, migrate, save_meal, settings, totals
 from .importer import run_import
 
+
+_SAFE_INGRESS_PATH = re.compile(r"^/[A-Za-z0-9/_-]*$")
+
+
+class IngressPathMiddleware:
+    """Teach Flask about the path Home Assistant places in front of the app."""
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        ingress_path = environ.get("HTTP_X_INGRESS_PATH", "").rstrip("/")
+        if ingress_path and _SAFE_INGRESS_PATH.fullmatch(ingress_path):
+            environ["SCRIPT_NAME"] = ingress_path
+        return self.app(environ, start_response)
+
 def create_app(test_config=None):
     app=Flask(__name__); app.secret_key="local-mounjaro-coach"
+    app.wsgi_app=IngressPathMiddleware(app.wsgi_app)
     app.config.update(test_config or {})
     path=app.config.get("DATABASE") or os.path.join(os.getenv("DATA_DIR","/data"),"coach.db")
     migrate(path); app.config["DATABASE"]=path
@@ -20,7 +37,10 @@ def create_app(test_config=None):
         threading.Thread(target=reminder_loop, daemon=True, name="reminders").start()
     def db(): return connect(path)
     @app.context_processor
-    def common(): return {"cfg":settings(db()),"nutrients":NUTRIENTS}
+    def common():
+        with db() as d: return {"cfg":settings(d),"nutrients":NUTRIENTS}
+    @app.get("/health")
+    def health(): return jsonify(status="ok")
     @app.get("/")
     def dashboard():
         with db() as d:
@@ -78,7 +98,10 @@ def create_app(test_config=None):
     def weights():
         with db() as d:
             if request.method=="POST": d.execute("INSERT INTO weights(measured_at,kg) VALUES(?,?)",(request.form['measured_at'],float(request.form['kg']))); d.commit(); return redirect(url_for('weights'))
-            rows=d.execute("SELECT *, (SELECT count(*) FROM weights b WHERE b.kg=w.kg AND abs(julianday(b.measured_at)-julianday(w.measured_at))<1) > 1 duplicate FROM weights w ORDER BY measured_at").fetchall(); return render_template("weights.html",weights=rows)
+            rows=d.execute("SELECT *, (SELECT count(*) FROM weights b WHERE b.kg=w.kg AND abs(julianday(b.measured_at)-julianday(w.measured_at))<1) > 1 duplicate FROM weights w ORDER BY measured_at").fetchall()
+            chart=weight_chart(rows)
+            summary={"latest":rows[-1]["kg"] if rows else None,"change":rows[-1]["kg"]-rows[0]["kg"] if len(rows)>1 else None,"readings":len(rows)}
+            return render_template("weights.html",weights=rows,chart=chart,summary=summary)
     @app.post("/weights/<int:wid>/delete")
     def delete_weight(wid):
         with db() as d: d.execute("DELETE FROM weights WHERE id=?",(wid,)); d.commit()
@@ -125,3 +148,16 @@ def calculate(d, items):
     for i in items:
         f=d.execute("SELECT * FROM foods WHERE id=?",(i['food_id'],)).fetchone(); m=float(i['multiplier']); result.append((f,m,{n:(None if f[n] is None else f[n]*m) for n in NUTRIENTS}))
     return result
+
+
+def weight_chart(rows, width=760, height=230, pad=24):
+    if not rows: return {"points":"","dots":[],"low":None,"high":None}
+    values=[float(row["kg"]) for row in rows]
+    low,high=min(values),max(values); span=high-low or 1
+    usable_width=width-pad*2; usable_height=height-pad*2
+    dots=[]
+    for index,row in enumerate(rows):
+        x=pad+(usable_width*index/(len(rows)-1) if len(rows)>1 else usable_width/2)
+        y=pad+(high-float(row["kg"]))/span*usable_height
+        dots.append({"x":round(x,2),"y":round(y,2),"kg":row["kg"],"date":row["measured_at"][:10]})
+    return {"points":" ".join(f'{dot["x"]},{dot["y"]}' for dot in dots),"dots":dots,"low":low,"high":high}

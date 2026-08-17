@@ -1,4 +1,4 @@
-import json
+import json, re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import pytest
@@ -54,3 +54,34 @@ def test_dashboard_and_meal_form_render(app):
 def test_invalid_dashboard_date_redirects(app):
     response=app.test_client().get("/?day=not-a-date")
     assert response.status_code==302 and response.headers["Location"].endswith("/")
+
+def test_home_assistant_ingress_prefixes_links_assets_and_redirects(app):
+    client=app.test_client(); headers={"X-Ingress-Path":"/api/hassio_ingress/test-token/"}
+    dashboard=client.get("/",headers=headers)
+    assert dashboard.status_code==200
+    assert b'href="/api/hassio_ingress/test-token/static/style.css"' in dashboard.data
+    assert b'href="/api/hassio_ingress/test-token/meal"' in dashboard.data
+    response=client.get("/?day=not-a-date",headers=headers)
+    assert response.status_code==302
+    assert response.headers["Location"].endswith("/api/hassio_ingress/test-token/")
+
+def test_every_internal_page_url_stays_inside_ingress(app):
+    client=app.test_client(); prefix=b"/api/hassio_ingress/test-token"; headers={"X-Ingress-Path":prefix.decode()}
+    for path in ("/","/meal","/foods","/weights","/settings","/review"):
+        response=client.get(path,headers=headers)
+        assert response.status_code==200
+        internal=[url for url in re.findall(rb'(?:href|action)="([^"]+)"',response.data) if url.startswith(b"/")]
+        assert internal and all(url.startswith(prefix) for url in internal)
+
+def test_invalid_ingress_header_is_ignored(app):
+    response=app.test_client().get("/",headers={"X-Ingress-Path":"https://bad.invalid/path"})
+    assert response.status_code==200
+    assert b'href="/static/style.css"' in response.data
+
+def test_health_and_main_pages_render(app):
+    client=app.test_client()
+    assert client.get("/health").get_json()=={"status":"ok"}
+    for path in ("/foods","/weights","/settings","/review"):
+        response=client.get(path)
+        assert response.status_code==200
+        assert b"Mounjaro Coach" in response.data
