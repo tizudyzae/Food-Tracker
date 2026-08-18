@@ -1,9 +1,44 @@
-{% extends 'base.html' %}{% block title %}{{'Edit' if meal else 'Log'}} meal · Mounjaro Coach{% endblock %}{% block body %}
-<section class="page-head"><div><p class="eyebrow">Food log</p><h1>{{'Edit meal' if meal else 'Log a meal'}}</h1><p class="lede">Record what you ate. Nothing is added until you save.</p></div></section>
+{% extends 'base.html' %}
+{% block title %}{{'Edit' if meal else 'Log'}} meal · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head">
+  <div><p class="eyebrow">Food log</p><h1>{{'Edit meal' if meal else 'Log a meal'}}</h1><p class="lede">Record what you actually ate. Nothing is added until you save.</p></div>
+</section>
+{% if preview %}
+<section class="meal-preview">
+  <div class="meal-preview-head"><div><p class="eyebrow">Nutrition preview</p><h2>Your selections are still in the form below</h2></div><span class="preview-total">{{preview_summary.calories|round|int}} <small>kcal</small></span></div>
+  <div class="preview-metrics">{% for n in ['protein','carbs','fat','fibre','salt'] %}<span><small>{{n|title}}</small><b>{{'%.1f'|format(preview_summary[n])}} g{% if preview_summary.incomplete[n] %}<i title="Some values are unknown">*</i>{% endif %}</b></span>{% endfor %}</div>
+  <div class="preview-foods">{% for f,m,t in preview %}<span><b>{{f.name}}</b><small>{{m}} serving{{'' if m==1 else 's'}} · {{t.calories|round|int if t.calories is not none else 'unknown'}} kcal</small></span>{% endfor %}</div>
+  <p>Adjust anything below, preview again, or save it as eaten.</p>
+</section>
+{% endif %}
 <form method="post" id="meal" class="form-card">
-  <div class="form-section"><div class="form-section-title"><span>1</span><div><h2>When did you eat?</h2><p>This determines which food day the meal belongs to.</p></div></div><div class="grid"><label>Date and time<input required type="datetime-local" name="eaten_at" value="{{meal.eaten_at if meal else now}}"></label><label>Food-day override <small>Optional</small><input type="date" name="food_day" value="{{meal.food_day if meal else ''}}"><span class="field-help">Defaults to your {{cfg.rollover}} rollover.</span></label></div></div>
-  <div class="form-section"><div class="form-section-title"><span>2</span><div><h2>What did you have?</h2><p>Choose foods and adjust the number of servings.</p></div></div><div id="items">{% for i in (items or [none]) %}<div class="foodrow"><label><span>Food</span><select name="food_id" required><option value="">Choose from your food library…</option>{% for f in foods %}<option value="{{f.id}}" {{'selected' if i and i.food_id==f.id}}>{{f.name}} — {{f.amount|round(1)}} {{f.unit}}</option>{% endfor %}</select></label><label><span>Servings</span><input name="multiplier" type="number" min="0.01" step="0.01" value="{{i.multiplier if i else 1}}"></label><button type="button" class="remove-row" onclick="removeRow(this)" aria-label="Remove food">×</button></div>{% endfor %}</div><button type="button" class="secondary" onclick="addRow()">＋ Add another food</button></div>
-  <div class="form-section"><div class="form-section-title"><span>3</span><div><h2>Add a note</h2><p>Optional, but helpful when looking back.</p></div></div><label>Meal name or note<input name="note" value="{{meal.note if meal else ''}}" placeholder="e.g. Chicken stir-fry"></label></div>
-  <div class="form-actions"><a href="{{url_for('dashboard')}}">Cancel</a><button name="mode" value="plan" class="secondary">Preview nutrition</button><button name="mode" value="confirmed">✓ {{'Save changes' if meal else 'Save as eaten'}}</button></div>
-</form>{% if meal %}<form method="post" action="{{url_for('delete_meal',mid=meal.id)}}" onsubmit="return confirm('Delete this meal?')" class="delete-form"><button class="danger">Delete meal</button></form>{% endif %}
-<script>function addRow(){const source=document.querySelector('.foodrow'),row=source.cloneNode(true);row.querySelector('select').value='';row.querySelector('input').value=1;document.querySelector('#items').append(row);row.querySelector('select').focus()}function removeRow(button){const rows=document.querySelectorAll('.foodrow');if(rows.length===1){rows[0].querySelector('select').value='';rows[0].querySelector('input').value=1}else button.closest('.foodrow').remove()}</script>{% endblock %}
+  <section class="form-section">
+    <div class="form-section-title"><span>1</span><div><h2>When did you eat?</h2><p>This sets the correct food day around your {{cfg.rollover}} rollover.</p></div></div>
+    <div class="form-grid"><label>Date and time<input required type="datetime-local" name="eaten_at" value="{{draft.eaten_at if draft else meal.eaten_at if meal else now}}"></label><label>Food-day override <small>Optional</small><input type="date" name="food_day" value="{{draft.food_day if draft and draft.food_day else meal.food_day if meal else ''}}"><span class="field-help">Leave blank unless the automatic day is wrong.</span></label></div>
+  </section>
+  <section class="form-section">
+    <div class="form-section-title"><span>2</span><div><h2>What did you have?</h2><p>Pick from your saved foods and adjust the number of servings.</p></div></div>
+    <div id="items">
+      {% for i in (items or [none]) %}
+      <div class="foodrow">
+        <label><span>Food</span><select name="food_id" required><option value="">Choose from your food library…</option>{% for f in foods %}<option value="{{f.id}}" {{'selected' if i and i.food_id|int==f.id}}>{{f.name}} · {{f.amount|round(1)}} {{f.unit}}{{' · archived' if f.archived}}</option>{% endfor %}</select></label>
+        <label><span>Servings</span><input name="multiplier" type="number" min="0.01" step="0.01" value="{{i.multiplier if i else 1}}"></label>
+        <button type="button" class="remove-row icon-button" onclick="removeRow(this)" aria-label="Remove food"><svg><use href="#i-trash"/></svg></button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="button secondary" onclick="addRow()"><svg><use href="#i-plus"/></svg>Add another food</button>
+  </section>
+  <section class="form-section">
+    <div class="form-section-title"><span>3</span><div><h2>Name the meal</h2><p>Optional, but it makes the daily log much easier to scan.</p></div></div>
+    <label>Meal name or note<input name="note" value="{{draft.note if draft else meal.note if meal else ''}}" placeholder="For example, chicken stir-fry"></label>
+  </section>
+  <div class="form-actions"><a href="{{url_for('dashboard')}}">Cancel</a><button name="mode" value="plan" class="button secondary">Preview nutrition</button><button name="mode" value="confirmed" class="button"><svg><use href="#i-check"/></svg>{{'Save changes' if meal else 'Save as eaten'}}</button></div>
+</form>
+{% if meal %}<form method="post" action="{{url_for('delete_meal',mid=meal.id)}}" onsubmit="return confirm('Delete this meal?')" class="delete-form"><button class="button danger"><svg><use href="#i-trash"/></svg>Delete meal</button></form>{% endif %}
+<script>
+function addRow(){const source=document.querySelector('.foodrow'),row=source.cloneNode(true);row.querySelector('select').value='';row.querySelector('input').value=1;document.querySelector('#items').append(row);row.querySelector('select').focus()}
+function removeRow(button){const rows=document.querySelectorAll('.foodrow');if(rows.length===1){rows[0].querySelector('select').value='';rows[0].querySelector('input').value=1}else button.closest('.foodrow').remove()}
+</script>
+{% endblock %}
