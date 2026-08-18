@@ -1,1 +1,8 @@
-{% extends 'base.html' %}{% block body %}<h1>Meal calculator</h1><div class="notice">Not saved — confirm the actual eating time and choose “Save as eaten” to log this.</div>{% for f,m,t in items %}<article class="meal"><b>{{m}} × {{f.name}}</b><span>{% if t.calories is not none %}{{t.calories|round}} kcal{% else %}unknown calories{% endif %}</span></article>{% endfor %}<a class="button" href="{{url_for('meal')}}">Return to logger</a>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Meal preview · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head"><div><p class="eyebrow">Meal calculator</p><h1>Nutrition preview</h1><p class="lede">Check the numbers before deciding what you actually eat.</p></div></section>
+<div class="alert info"><svg><use href="#i-info"/></svg><div><b>This has not been saved</b><p>Return to the logger, confirm the eating time and choose Save as eaten when the meal is real.</p></div></div>
+<div class="preview-list">{% for f,m,t in items %}<article><span class="food-symbol"><svg><use href="#i-food"/></svg></span><div><b>{{f.name}}</b><small>{{m}} serving{{'' if m==1 else 's'}}</small></div><strong>{% if t.calories is not none %}{{t.calories|round|int}} <small>kcal</small>{% else %}Unknown calories{% endif %}</strong></article>{% endfor %}</div>
+<div class="page-actions"><a class="button" href="{{url_for('meal')}}"><svg><use href="#i-chevron-left"/></svg>Return to logger</a></div>
+{% endblock %}

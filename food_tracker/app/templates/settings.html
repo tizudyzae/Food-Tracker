@@ -1,1 +1,52 @@
-{% extends 'base.html' %}{% block body %}<h1>Settings</h1><form method="post" class="grid">{% for k,label in [('calorie_min','Calorie range minimum'),('calorie_max','Calorie range maximum'),('protein_min','Protein guidance minimum'),('protein_max','Protein guidance maximum'),('rollover','Food-day rollover'),('timezone','Timezone'),('meal_times','Meal reminder times (comma separated)'),('weigh_day','Weekly weigh-in day'),('weigh_time','Weekly weigh-in time'),('notification_service','HA notification service'),('quiet_start','Quiet hours start'),('quiet_end','Quiet hours end'),('salt_warn','Salt warning (g)'),('fibre_low','Low fibre warning (g)'),('meal_calorie_warn','Large meal warning (kcal)'),('meal_fat_warn','High-fat meal warning (g)')] %}<label>{{label}}<input name="{{k}}" value="{{cfg[k]|join(',') if k=='meal_times' else cfg[k]}}"></label>{% endfor %}{% for k,label in [('reminders','Enable meal reminders'),('weigh_reminder','Enable weekly weigh-in'),('budget_reminder','Enable late-meal budget reminder')] %}<label class="check"><input type="checkbox" name="{{k}}" {{'checked' if cfg[k]}}> {{label}}</label>{% endfor %}<button>Save settings</button></form><h2>Backup & restore</h2><p>Exports contain personal food and weight data. Store them securely.</p><a class="button secondary" href="{{url_for('export')}}">Export JSON</a><form method="post" action="{{url_for('import_data')}}" enctype="multipart/form-data" class="inline"><input required type="file" accept="application/json" name="file"><button>Import and replace data</button></form><h2>Historical source logs</h2><form action="{{url_for('import_history')}}" method="post"><button class="secondary">Run idempotent reference import</button></form>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Settings · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head">
+  <div><p class="eyebrow">Personalise</p><h1>Coach settings</h1><p class="lede">Set your targets, food-day timing and optional reminders.</p></div>
+</section>
+<form method="post" class="settings-form">
+  <section class="settings-card">
+    <div class="settings-card-head"><span><svg><use href="#i-trend"/></svg></span><div><h2>Daily targets</h2><p>These control the progress display and warning cards.</p></div></div>
+    <div class="form-grid three">
+      <label>Calorie minimum<input type="number" min="1" step="1" name="calorie_min" value="{{cfg.calorie_min}}"><span class="field-help">kcal</span></label>
+      <label>Calorie maximum<input type="number" min="1" step="1" name="calorie_max" value="{{cfg.calorie_max}}"><span class="field-help">kcal</span></label>
+      <label>Salt guide<input type="number" min="0" step=".1" name="salt_warn" value="{{cfg.salt_warn}}"><span class="field-help">grams</span></label>
+      <label>Protein minimum<input type="number" min="0" step="1" name="protein_min" value="{{cfg.protein_min}}"><span class="field-help">grams</span></label>
+      <label>Protein maximum<input type="number" min="0" step="1" name="protein_max" value="{{cfg.protein_max}}"><span class="field-help">grams</span></label>
+      <label>Low fibre warning<input type="number" min="0" step="1" name="fibre_low" value="{{cfg.fibre_low}}"><span class="field-help">grams</span></label>
+      <label>Large meal warning<input type="number" min="0" step="1" name="meal_calorie_warn" value="{{cfg.meal_calorie_warn}}"><span class="field-help">kcal</span></label>
+      <label>High-fat meal warning<input type="number" min="0" step="1" name="meal_fat_warn" value="{{cfg.meal_fat_warn}}"><span class="field-help">grams</span></label>
+    </div>
+  </section>
+  <section class="settings-card">
+    <div class="settings-card-head"><span><svg><use href="#i-calendar"/></svg></span><div><h2>Schedule</h2><p>Your late-night meals stay attached to the day they belong to.</p></div></div>
+    <div class="form-grid">
+      <label>Food-day rollover<input type="time" name="rollover" value="{{cfg.rollover}}"></label>
+      <label>Timezone<input name="timezone" value="{{cfg.timezone}}"></label>
+      <label class="wide">Regular meal times<input name="meal_times" value="{{cfg.meal_times|join(',')}}"><span class="field-help">Comma separated, for example 14:15, 19:45, 00:00</span></label>
+      <label>Weekly weigh-in day<select name="weigh_day">{% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}<option {{'selected' if cfg.weigh_day==day}}>{{day}}</option>{% endfor %}</select></label>
+      <label>Weekly weigh-in time<input type="time" name="weigh_time" value="{{cfg.weigh_time}}"></label>
+    </div>
+  </section>
+  <section class="settings-card">
+    <div class="settings-card-head"><span><svg><use href="#i-bell"/></svg></span><div><h2>Home Assistant reminders</h2><p>Off by default. Notifications use your local Home Assistant service.</p></div></div>
+    <div class="toggle-list">
+      <label class="toggle"><span><b>Meal-window reminders</b><small>Prompt at your regular meal times.</small></span><input type="checkbox" name="reminders" {{'checked' if cfg.reminders}}><i></i></label>
+      <label class="toggle"><span><b>Weekly weigh-in</b><small>Use the day and time chosen above.</small></span><input type="checkbox" name="weigh_reminder" {{'checked' if cfg.weigh_reminder}}><i></i></label>
+      <label class="toggle"><span><b>Late-meal calorie budget</b><small>Include the remaining range in your last meal reminder.</small></span><input type="checkbox" name="budget_reminder" {{'checked' if cfg.budget_reminder}}><i></i></label>
+    </div>
+    <div class="form-grid three reminder-fields"><label>Notification service<input name="notification_service" value="{{cfg.notification_service}}" placeholder="notify.mobile_app_phone"></label><label>Quiet hours start<input type="time" name="quiet_start" value="{{cfg.quiet_start}}"></label><label>Quiet hours end<input type="time" name="quiet_end" value="{{cfg.quiet_end}}"></label></div>
+  </section>
+  <div class="settings-save"><span>Changes apply immediately.</span><button class="button"><svg><use href="#i-check"/></svg>Save settings</button></div>
+</form>
+<div class="settings-split">
+  <section class="settings-card">
+    <div class="settings-card-head"><span><svg><use href="#i-lock"/></svg></span><div><h2>Backup and restore</h2><p>Exports contain personal food and weight data. Keep them private.</p></div></div>
+    <div class="backup-actions"><a class="button secondary" href="{{url_for('export')}}"><svg><use href="#i-download"/></svg>Export JSON</a><form method="post" action="{{url_for('import_data')}}" enctype="multipart/form-data" onsubmit="return confirm('Replace all current app data with this backup?')"><label class="file-picker"><svg><use href="#i-upload"/></svg><span>Choose JSON backup</span><input required type="file" accept="application/json" name="file"></label><button class="button danger">Import and replace</button></form></div>
+  </section>
+  <section class="settings-card">
+    <div class="settings-card-head"><span><svg><use href="#i-food"/></svg></span><div><h2>Historical source logs</h2><p>Safely imports only records that can be confirmed from the included source material.</p></div></div>
+    <form action="{{url_for('import_history')}}" method="post"><button class="button secondary"><svg><use href="#i-upload"/></svg>Run reference import</button></form>
+  </section>
+</div>
+{% endblock %}

@@ -16,34 +16,43 @@ def migrate(path):
     with connect(path) as d:
         d.executescript('''CREATE TABLE IF NOT EXISTS migrations(version INTEGER PRIMARY KEY);
         CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS foods(id INTEGER PRIMARY KEY, name TEXT NOT NULL, basis TEXT NOT NULL DEFAULT 'serving', amount REAL NOT NULL DEFAULT 1, unit TEXT NOT NULL DEFAULT 'serving', calories REAL, protein REAL, carbs REAL, sugars REAL, fat REAL, saturates REAL, fibre REAL, salt REAL, source TEXT NOT NULL, archived INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS foods(id INTEGER PRIMARY KEY, name TEXT NOT NULL, basis TEXT NOT NULL DEFAULT 'serving', amount REAL NOT NULL DEFAULT 1, unit TEXT NOT NULL DEFAULT 'serving', calories REAL, protein REAL, carbs REAL, sugars REAL, fat REAL, saturates REAL, fibre REAL, salt REAL, source TEXT NOT NULL, archived INTEGER NOT NULL DEFAULT 0, seed_key TEXT);
         CREATE TABLE IF NOT EXISTS meals(id INTEGER PRIMARY KEY, eaten_at TEXT NOT NULL, food_day TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', status TEXT NOT NULL CHECK(status IN ('confirmed','review')), import_key TEXT UNIQUE, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS meal_items(id INTEGER PRIMARY KEY, meal_id INTEGER NOT NULL REFERENCES meals(id) ON DELETE CASCADE, food_id INTEGER REFERENCES foods(id), name TEXT NOT NULL, multiplier REAL NOT NULL, calories REAL, protein REAL, carbs REAL, sugars REAL, fat REAL, saturates REAL, fibre REAL, salt REAL);
         CREATE TABLE IF NOT EXISTS weights(id INTEGER PRIMARY KEY, measured_at TEXT NOT NULL, kg REAL NOT NULL CHECK(kg>0), source_key TEXT UNIQUE);
         CREATE TABLE IF NOT EXISTS notifications(window_key TEXT PRIMARY KEY, sent_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS import_runs(id INTEGER PRIMARY KEY, run_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, report TEXT NOT NULL);''')
         d.execute("INSERT OR IGNORE INTO settings(id,json) VALUES(1,?)",(json.dumps(DEFAULTS),)); d.execute("INSERT OR IGNORE INTO migrations VALUES(1)")
+        if "seed_key" not in {row[1] for row in d.execute("PRAGMA table_info(foods)")}:
+            d.execute("ALTER TABLE foods ADD COLUMN seed_key TEXT")
+        d.execute("CREATE UNIQUE INDEX IF NOT EXISTS foods_seed_key ON foods(seed_key) WHERE seed_key IS NOT NULL")
+        d.execute("INSERT OR IGNORE INTO migrations VALUES(2)")
         seed(d)
 
 def seed(d):
     foods=[
-    ("Banana, medium","serving",1,"banana",105,1.3,27,None,.3,None,3,0,"Project Rules.txt; standard estimate"),
-    ("Co-op Lime & Chilli Chicken Protein Chunks","serving",60,"g",81,16,2.4,None,.9,None,None,None,"Project Rules.txt; verified"),
-    ("Co-op Tikka Chicken Chunks","serving",80,"g",103,20,None,None,None,None,None,None,"Project Rules.txt; verified"),
-    ("Co-op Flame Grilled Chicken Mini Fillets","serving",130,"g pack",154,36,None,None,None,None,None,None,"Project Rules.txt; verified"),
-    ("Co-op Protein Jalapeño BBQ Popped Chips","serving",25,"g",102,6.7,13,None,2.6,None,1,.26,"Project Rules.txt; verified"),
-    ("Itsu Thai Sweet Chilli Prawn Crackers","serving",19,"g",97,.5,12,None,5.2,None,None,None,"Project Rules.txt; protein listed as <0.5g"),
-    ("Huel Black RTD Strawberry Banana","serving",500,"ml",400,35,None,None,None,None,7,None,"Project Rules.txt; partial label"),
-    ("Huel Banana RTD","serving",500,"ml",400,20,None,None,None,None,None,None,"Project Rules.txt; verified"),
-    ("UFIT Strawberry Protein Shake","serving",330,"ml",149,25,None,None,None,None,None,None,"Project Rules.txt; verified"),
-    ("Optimum Nutrition High Protein Shake","serving",330,"ml",185,25,None,None,None,None,None,None,"Project Rules.txt; verified"),
-    ("YFood Complete Drink","serving",500,"ml",400,35,None,None,None,None,None,None,"Project Rules.txt; verify flavour"),
-    ("Chicken breast, raw","100g",100,"g",110,23,0,None,1.5,None,0,0,"Project Rules.txt; estimated range midpoint for fat"),
-    ("Co-op stir-fry vegetables","serving",320,"g",86,4,None,None,.9,None,10,None,"Project Rules.txt; fat recorded as <1g"),
-    ("Ben's Egg Fried Rice","serving",220,"g pouch",345,9,None,None,None,None,None,None,"Project Rules.txt; estimated"),
-    ("Wagamama Firecracker Sauce","serving",120,"g pouch",106,2.4,None,None,None,None,None,4.28,"Project Rules.txt; verified"),
-    ("Salt & Pepper Chicken Spring Rolls","serving",100,"g pack",307,8.2,27,None,18,None,3.6,.49,"Project Rules.txt; verified")]
-    for x in foods: d.execute("INSERT INTO foods(name,basis,amount,unit,calories,protein,carbs,sugars,fat,saturates,fibre,salt,source) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM foods WHERE name=?)",x+(x[0],))
+    ("banana-medium","Banana, medium","serving",1,"banana",105,1.3,27,None,.3,None,3,0,"Project Rules.txt; standard estimate"),
+    ("coop-lime-chilli-chicken","Co-op Lime & Chilli Chicken Protein Chunks","serving",60,"g",81,16,2.4,None,.9,None,None,None,"Project Rules.txt; verified"),
+    ("coop-tikka-chicken","Co-op Tikka Chicken Chunks","serving",80,"g",103,20,None,None,None,None,None,None,"Project Rules.txt; verified"),
+    ("coop-flame-grilled-chicken","Co-op Flame Grilled Chicken Mini Fillets","serving",130,"g pack",154,36,None,None,None,None,None,None,"Project Rules.txt; verified"),
+    ("coop-jalapeno-protein-chips","Co-op Protein Jalapeño BBQ Popped Chips","serving",25,"g",102,6.7,13,None,2.6,None,1,.26,"Project Rules.txt; verified"),
+    ("itsu-thai-chilli-crackers","Itsu Thai Sweet Chilli Prawn Crackers","serving",19,"g",97,.5,12,None,5.2,None,None,None,"Project Rules.txt; protein listed as <0.5g"),
+    ("huel-black-strawberry-banana","Huel Black RTD Strawberry Banana","serving",500,"ml",400,35,None,None,None,None,7,None,"Project Rules.txt; partial label"),
+    ("huel-banana","Huel Banana RTD","serving",500,"ml",400,20,None,None,None,None,None,None,"Project Rules.txt; verified"),
+    ("ufit-strawberry","UFIT Strawberry Protein Shake","serving",330,"ml",149,25,None,None,None,None,None,None,"Project Rules.txt; verified"),
+    ("optimum-protein-shake","Optimum Nutrition High Protein Shake","serving",330,"ml",185,25,None,None,None,None,None,None,"Project Rules.txt; verified"),
+    ("yfood-complete","YFood Complete Drink","serving",500,"ml",400,35,None,None,None,None,None,None,"Project Rules.txt; verify flavour"),
+    ("chicken-breast-raw","Chicken breast, raw","100g",100,"g",110,23,0,None,1.5,None,0,0,"Project Rules.txt; estimated range midpoint for fat"),
+    ("coop-stir-fry-veg","Co-op stir-fry vegetables","serving",320,"g",86,4,None,None,.9,None,10,None,"Project Rules.txt; fat recorded as <1g"),
+    ("bens-egg-fried-rice","Ben's Egg Fried Rice","serving",220,"g pouch",345,9,None,None,None,None,None,None,"Project Rules.txt; estimated"),
+    ("wagamama-firecracker","Wagamama Firecracker Sauce","serving",120,"g pouch",106,2.4,None,None,None,None,None,4.28,"Project Rules.txt; verified"),
+    ("spring-rolls-salt-pepper","Salt & Pepper Chicken Spring Rolls","serving",100,"g pack",307,8.2,27,None,18,None,3.6,.49,"Project Rules.txt; verified")]
+    for expected_id,row in enumerate(foods,1):
+        key,*x=row; existing=d.execute("SELECT id,seed_key FROM foods WHERE seed_key=? OR id=? OR name=? ORDER BY seed_key IS NOT NULL DESC LIMIT 1",(key,expected_id,x[0])).fetchone()
+        if existing:
+            if not existing["seed_key"]: d.execute("UPDATE foods SET seed_key=? WHERE id=?",(key,existing["id"]))
+        else:
+            d.execute("INSERT INTO foods(name,basis,amount,unit,calories,protein,carbs,sugars,fat,saturates,fibre,salt,source,seed_key) VALUES("+','.join(['?']*14)+")",(*x,key))
     weights=[("2026-07-29T23:14",126.4),("2026-07-12T08:52",124.2),("2026-07-12T08:51",124.2),("2026-02-24T11:14",108.6),("2025-12-17T12:33",101.8),("2025-11-30T15:44",101.9),("2025-11-25T13:00",103.4),("2025-11-18T10:48",104.6),("2025-11-10T12:40",105.6),("2025-11-03T11:30",106.7)]
     for dt,kg in weights: d.execute("INSERT OR IGNORE INTO weights(measured_at,kg,source_key) VALUES(?,?,?)",(dt,kg,"seed:"+dt))
 
@@ -70,6 +79,31 @@ def save_meal(d, payload, meal_id=None):
             vals=[None if f[n] is None else f[n]*mult for n in NUTRIENTS]
             d.execute("INSERT INTO meal_items(meal_id,food_id,name,multiplier,"+','.join(NUTRIENTS)+") VALUES("+','.join(['?']*12)+")",(mid,f['id'],f['name'],mult,*vals))
     return mid
+
+def refresh_logged_food(d, food_id):
+    f=d.execute("SELECT * FROM foods WHERE id=?",(food_id,)).fetchone()
+    if not f: raise ValueError("Food not found.")
+    assignments=["name=?"]+[n+"=?*multiplier" for n in NUTRIENTS]
+    d.execute("UPDATE meal_items SET "+",".join(assignments)+" WHERE food_id=?",(f["name"],*[f[n] for n in NUTRIENTS],food_id))
+
+def effective_items(d, where_sql="", params=()):
+    values=",".join("CASE WHEN f.id IS NULL THEN i."+n+" ELSE f."+n+"*i.multiplier END AS "+n for n in NUTRIENTS)
+    return d.execute("SELECT i.id,i.meal_id,i.food_id,COALESCE(f.name,i.name) name,i.multiplier,m.food_day,"+values+" FROM meal_items i JOIN meals m ON m.id=i.meal_id LEFT JOIN foods f ON f.id=i.food_id WHERE m.status='confirmed' "+where_sql,params).fetchall()
+
 def totals(d, day):
-    rows=d.execute("SELECT i.* FROM meal_items i JOIN meals m ON m.id=i.meal_id WHERE m.food_day=? AND m.status='confirmed'",(day,)).fetchall()
+    rows=effective_items(d,"AND m.food_day=?",(day,))
     return {n:sum(r[n] or 0 for r in rows) for n in NUTRIENTS}|{"incomplete":{n:any(r[n] is None for r in rows) for n in NUTRIENTS},"items":len(rows)}
+
+def meal_totals(d, meal_id):
+    rows=effective_items(d,"AND m.id=?",(meal_id,))
+    return {"calories":sum(r["calories"] or 0 for r in rows),"items":len(rows)}
+
+def nutrient_totals_by_day(d, nutrient, start, end):
+    if nutrient not in NUTRIENTS: raise ValueError("Unknown nutrient.")
+    grouped={}
+    for row in effective_items(d,"AND m.food_day BETWEEN ? AND ?",(start,end)):
+        current=grouped.setdefault(row["food_day"],{"total":0,"incomplete":False,"items":0})
+        current["items"]+=1
+        if row[nutrient] is None: current["incomplete"]=True
+        else: current["total"]+=row[nutrient]
+    return grouped

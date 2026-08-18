@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{label}} trend · Mounjaro Coach{% endblock %}
+{% block body %}
+<section class="page-head">
+  <div><p class="eyebrow">Nutrition trends</p><h1>{{label}}</h1><p class="lede">{{guide}}. Food database corrections are applied to every logged day.</p></div>
+  <a class="button secondary" href="{{url_for('dashboard')}}"><svg><use href="#i-chevron-left"/></svg>Overview</a>
+</section>
+<nav class="nutrient-tabs" aria-label="Choose nutrition measure">
+  {% for key in nutrients %}<a href="{{url_for('trends',nutrient=key,start=start,end=end)}}" class="{{'active' if key==nutrient}}">{{labels[key]}}</a>{% endfor %}
+</nav>
+<section class="trend-controls">
+  <div class="period-switcher"><a href="{{url_for('trends',nutrient=nutrient,start=previous_start,end=previous_end)}}" aria-label="Previous period"><svg><use href="#i-chevron-left"/></svg></a><span>{{start_label}} to {{end_label}}</span><a href="{{url_for('trends',nutrient=nutrient,start=next_start,end=next_end)}}" aria-label="Next period"><svg><use href="#i-chevron-right"/></svg></a></div>
+  <form method="get" class="date-range"><label>From<input type="date" name="start" value="{{start}}"></label><label>To<input type="date" name="end" value="{{end}}"></label><button class="button">Update</button><a href="{{url_for('trends',nutrient=nutrient)}}">Current week</a></form>
+</section>
+<section class="trend-summary">
+  <article><small>Period total</small><b>{{'%.1f'|format(summary.total)}} <i>{{unit}}</i></b></article>
+  <article><small>Daily average</small><b>{{'%.1f'|format(summary.average)}} <i>{{unit}}</i></b></article>
+  <article><small>Days with food</small><b>{{summary.logged_days}} <i>of {{series|length}}</i></b></article>
+  <article><small>Incomplete days</small><b>{{summary.incomplete_days}}</b></article>
+</section>
+<section class="chart-card nutrient-chart-card">
+  <div class="section-head compact"><div><p class="eyebrow">Selected period</p><h2>Daily {{label|lower}}</h2></div><span>Highest {{'%.1f'|format(chart.maximum if summary.total else 0)}} {{unit}}</span></div>
+  <div class="nutrient-chart">
+    <svg viewBox="0 0 {{chart.width}} {{chart.height}}" role="img" aria-label="Daily {{label|lower}} bar chart">
+      <path class="grid-line" d="M34 18H786M34 124H786M34 230H786"/>
+      {% for bar in chart.bars %}
+      <rect x="{{bar.x}}" y="{{bar.y}}" width="{{bar.width}}" height="{{bar.height}}" rx="5" class="nutrient-bar {{nutrient}}"><title>{{bar.date}}: {{'%.1f'|format(bar.value)}} {{unit}}{{' (some values unknown)' if bar.incomplete}}</title></rect>
+      {% if bar.incomplete %}<circle cx="{{bar.x+bar.width/2}}" cy="{{[bar.y-7,10]|max}}" r="3" class="incomplete-dot"><title>Some label values are unknown</title></circle>{% endif %}
+      {% if bar.show_label %}<text x="{{bar.x+bar.width/2}}" y="254" text-anchor="middle">{{bar.label}}</text>{% endif %}
+      {% endfor %}
+    </svg>
+  </div>
+</section>
+<section class="section-head"><div><p class="eyebrow">Daily detail</p><h2>Breakdown</h2></div></section>
+<div class="trend-table" role="table" aria-label="Daily {{label|lower}} totals">
+  {% for point in series %}<div role="row"><time role="cell">{{point.date}}</time><span role="cell">{{point.items}} food item{{'' if point.items==1 else 's'}}</span><b role="cell">{{'%.1f'|format(point.value)}} {{unit}}{% if point.incomplete %}<i title="Some values are unknown">*</i>{% endif %}</b></div>{% endfor %}
+</div>
+{% endblock %}
